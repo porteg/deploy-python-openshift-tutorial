@@ -1,47 +1,33 @@
-'''
-Created on 04-Sep-2019
-
-@author: bkadambi
-'''
-
-from opentelemetry import trace
-from opentelemetry.exporter.jaeger.thrift import JaegerExporter
-from opentelemetry.sdk.resources import SERVICE_NAME, Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-
-# -*- coding: UTF-8 -*-
-"""
-hello_flask: First Python-Flask webapp
-"""
+from prometheus_client import Counter
 from flask import Flask  # From module flask import class Flask
+from flask import Response 
 app = Flask(__name__)    # Construct an instance of Flask class for our webapp
 
-@app.route('/hello')   # URL '/' to be handled by main() route handler
+c_hellos = Counter('count_hellos', 'number of hellos')
+c_byes = Counter('count_byes', 'number of byes')
+
+@app.route('/')   # URL '/' to be handled by main() route handler
 def main():
+    return Response('Hello, world 2!', mimetype="text/plain")
 
-    trace.set_tracer_provider(
-        TracerProvider(
-            resource=Resource.create({SERVICE_NAME: "my-hello-service"})
-        )
-    )
+@app.route("/metrics") # URL for metrics
+def metrics():
+    res = "#HELP c_hellos count of calls to /hello\n#TYPE c_hellos counter\n"
+    res = res + "c_hellos " + str(c_hellos._value.get()) + '\n'
+    res = res + "#HELP c_byes count of calls to /bye\n#TYPE c_byes counter\n"
+    res = res + "c_byes " + str(c_byes._value.get())
 
-    jaeger_exporter = JaegerExporter(
-        agent_host_name="localhost",
-        agent_port=6831,
-    )
+    return Response(res, mimetype="text/plain")
 
-    trace.get_tracer_provider().add_span_processor(
-       BatchSpanProcessor(jaeger_exporter)
-    )
-     
-    tracer = trace.get_tracer(__name__)
-    with tracer.start_as_current_span("rootSpan"):
-        with tracer.start_as_current_span("childSpan"):
-            print("Hello world!")
+@app.route("/hello") 
+def hello():
+    c_hellos.inc()
+    return "hello"
 
-    """Say hello"""
-    return 'Hello, world 4!'
+@app.route("/bye")
+def goodbye():
+    c_byes.inc()
+    return "Goodbye"
 
 if __name__ == '__main__':  # Script executed directly?
     print("Hello World! Built with a Docker file.")
