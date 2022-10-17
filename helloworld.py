@@ -12,8 +12,11 @@ def main():
 
 @app.route("/metrics") # URL for metrics
 def metrics():
+
+    my_label = "{gissmonitoring=\"yes\"} "
+
     res = "#HELP c_hellos count of calls to /hello\n#TYPE c_hellos counter\n"
-    res = res + "c_hellos " + str(c_hellos._value.get()) + '\n'
+    res = res + "c_hellos" + my_label + str(c_hellos._value.get()) + '\n'
     res = res + "#HELP c_byes count of calls to /bye\n#TYPE c_byes counter\n"
     res = res + "c_byes " + str(c_byes._value.get())
 
@@ -22,6 +25,7 @@ def metrics():
 @app.route("/hello") 
 def hello():
     c_hellos.inc()
+    c_hellos.
     return "hello"
 
 @app.route("/bye")
