@@ -25,7 +25,6 @@ def metrics():
 @app.route("/hello") 
 def hello():
     c_hellos.inc()
-    c_hellos.
     return "hello"
 
 @app.route("/bye")
